@@ -25,7 +25,7 @@
 #include <ti/devices/msp/msp.h>
 #include "../inc/LaunchPad.h"
 #include "../inc/Clock.h"
-#include "../inc/MCP4921.h"
+#include "./TLV5616.h"
 #include "../inc/ST7735_SDC.h"
 #include "Transmitter.h"
 
@@ -44,7 +44,7 @@ int main(void){ // main to run Lab9 transmitter
   ST7735_OutString("ECE445L Lab9\n");
   ST7735_OutString("Transmitter\n");
   TIMG0->COUNTERREGS.CTRCTL &= ~0x01; // disarm if not using SDC
-  MCP4921_Init(2048);
+  TLV5616_Init(2048);
   Transmitter_Init();
   __enable_irq();
   while(1){
