@@ -26,29 +26,24 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>ADC.c</name>
+			<type>1</type>
+			<location>C:/Users/jonat/OneDrive/Documents/UT 2026-2027/ECE 445L/ece445l_lab7-10_fall26-4-ew-js-tp-ak/sw/inc/ADC.c</location>
+		</link>
+		<link>
+			<name>ADC.h</name>
+			<type>1</type>
+			<location>C:/Users/jonat/OneDrive/Documents/UT 2026-2027/ECE 445L/ece445l_lab7-10_fall26-4-ew-js-tp-ak/sw/inc/ADC.h</location>
+		</link>
+		<link>
 			<name>Clock.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/inc/Clock.c</locationURI>
 		</link>
 		<link>
-			<name>ST7735_SDC.c</name>
+			<name>FIFO.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/ST7735_SDC.c</locationURI>
-		</link>
-		<link>
-			<name>SPI.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/SPI.c</locationURI>
-		</link>
-		<link>
-			<name>Timer.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/Timer.c</locationURI>
-		</link>
-		<link>
-			<name>MCP4921.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/MCP4921.c</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/FIFO.c</locationURI>
 		</link>
 		<link>
 			<name>LaunchPad.c</name>
@@ -56,14 +51,29 @@
 			<locationURI>PARENT-1-PROJECT_LOC/inc/LaunchPad.c</locationURI>
 		</link>
 		<link>
+			<name>MCP4921.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/MCP4921.c</locationURI>
+		</link>
+		<link>
+			<name>SPI.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/SPI.c</locationURI>
+		</link>
+		<link>
+			<name>ST7735_SDC.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/ST7735_SDC.c</locationURI>
+		</link>
+		<link>
+			<name>Timer.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/Timer.c</locationURI>
+		</link>
+		<link>
 			<name>UART.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/inc/UART.c</locationURI>
-		</link>
-		<link>
-			<name>FIFO.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/FIFO.c</locationURI>
 		</link>
 		<link>
 			<name>UARTints.c</name>

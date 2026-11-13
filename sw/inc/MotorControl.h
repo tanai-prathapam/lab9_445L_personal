@@ -51,6 +51,10 @@
 #define __MOTORCONTOL_H__
 #include <stdio.h>
 #include <stdint.h>
+#include "PIController.h"
+
+#define MC_OPEN_LOOP_MAX_DUTY 100
+
 /*****Note to students, feel free to change any or all of this ******/
 /**
  * Initialize RSLK Controller
@@ -67,7 +71,7 @@ void MC_Init(void);
  * @brief  PI controller
  * @note should run at 100Hz
  */
-void MC_PIControlLoop(void);
+void MC_PIControlLoop(PIController *L_PI, PIController *R_PI);
 
 /**
  * Set desired speed in 0.1 rpm.
@@ -214,5 +218,18 @@ int32_t MC_GetRightU(void);
  * @note left and right speeds are dumped after each change in desired speed
  */
 uint32_t *MC_DumpLeft(void);
+
+uint32_t MC_GetLeftSpeed(void);
+uint32_t MC_GetRightSpeed(void);
+
+int32_t MC_GetOpenLoopDuty(void);
+
+uint8_t MC_HasCapture(void);
+uint8_t MC_SetOpenLoopDuty(uint32_t dutyPct);
+
+#if FF_MODE
+// initialization function for FF mode
+void MC_PIController_changeparamsFF(PIController *controller, uint32_t kp, uint32_t ki, uint16_t speed_ref, uint32_t ff_a, uint32_t ff_b, uint32_t ff_c);
+#endif
 
 #endif
