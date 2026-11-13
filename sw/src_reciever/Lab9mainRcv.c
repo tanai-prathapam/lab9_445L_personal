@@ -18,6 +18,17 @@
 #include "../inc/CLI.h"
 #include "Receiver.h"
 
+#include "PIController.h"
+
+// Watch these variables in the debugger.
+// Units are 0.1 RPM.
+volatile uint32_t LeftSpeed;
+volatile uint32_t RightSpeed;
+
+uint32_t Duty,Period,Change;
+uint32_t Left,Center,Right;
+
+PIController L_PI, R_PI;
 
 // Receiver microphone
 //   PB19 analog input, ADC1 channel 6
@@ -68,7 +79,7 @@
 // Insert J6: Connects PB26 to red LED2
 // Insert J7: Connects PB27 to green LED2
 
-
+uint32_t Bump;
 int main(void){ // use to run Lab 9 receiver
 // ****ECE445L write this ****
 
@@ -76,12 +87,34 @@ int main(void){ // use to run Lab 9 receiver
   __disable_irq();
   LaunchPad_Init();
   Clock_Init_HFXT_40_80MHz(0);  // 0.005% accurate running off external crystal oscillator
-  
-  
-   __enable_irq();
+  SSD1306_Init(SSD1306_SWITCHCAPVCC);
+  SSD1306_SetCursor(0,0);
+  SSD1306_ClearBuffer();
+  SSD1306_OutBuffer();
+
+  MC_Init(); // Initializes motors, tachometers, and bumpers
+  TimerG0_IntArm(10000,40,2);
+  uint32_t starter_RPM_to_send = 0; // divided by 10. e.g: 100 gives 10 RPM
+  #if FF_MODE
+    MC_PIController_changeparamsFF(&L_PI, 5, 5, starter_RPM_to_send, L_MOTOR_FFCONFIG);
+    MC_PIController_changeparamsFF(&R_PI, 5, 5, starter_RPM_to_send, R_MOTOR_FFCONFIG);
+  #else
+    MC_PIController_changeparams(&L_PI, 9863, 772, starter_RPM_to_send);
+    MC_PIController_changeparams(&R_PI, 9863, 772, starter_RPM_to_send);
+  #endif
+  __enable_irq();
+  CLI_Init(&L_PI, &R_PI);
   while(1){
-    
-    
+    CLI_Process();
+    uint32_t rightRPM = Tachometer_GetRightrpm();
+    uint32_t leftRPM = Tachometer_GetLeftrpm();
+    SSD1306_SetCursor(0,3);
+    SSD1306_OutString("RightRPM="); 
+    SSD1306_OutUDec(rightRPM/10); SSD1306_OutChar('.'); SSD1306_OutUDec(rightRPM%10);
+
+    SSD1306_SetCursor(0,4);
+    SSD1306_OutString("LeftRPM="); 
+    SSD1306_OutUDec(leftRPM/10); SSD1306_OutChar('.'); SSD1306_OutUDec(leftRPM%10);
   }
 }
 // runs in real time at 100 Hz
