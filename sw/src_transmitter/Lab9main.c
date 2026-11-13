@@ -28,6 +28,8 @@
 #include "./TLV5616.h"
 #include "../inc/ST7735_SDC.h"
 #include "Transmitter.h"
+#include <stdint.h>
+#include "Joystick.h"
 
 
 
@@ -43,9 +45,10 @@ int main(void){ // main to run Lab9 transmitter
   ST7735_SetCursor(0, 0);  
   ST7735_OutString("ECE445L Lab9\n");
   ST7735_OutString("Transmitter\n");
-  TIMG0->COUNTERREGS.CTRCTL &= ~0x01; // disarm if not using SDC
+  //TIMG0->COUNTERREGS.CTRCTL &= ~0x01; // disarm if not using SDC
   TLV5616_Init(2048);
   Transmitter_Init();
+  Joystick_Init();
   __enable_irq();
   while(1){
     __WFI();
@@ -54,8 +57,10 @@ int main(void){ // main to run Lab9 transmitter
 
 
 // Executed every 1 ms
+uint32_t x, y;
 void TIMG0_IRQHandler(void){
   if((TIMG0->CPU_INT.IIDX) == 1){ // this will acknowledge
 // the SDC interface will use this
   }
+  Joystick_direction(&x, &y);
 }

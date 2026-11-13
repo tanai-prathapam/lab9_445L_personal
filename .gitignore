@@ -148,3 +148,9 @@ RemoteSystemsTempFiles/
 
 # API autogen documentation.
 resources/Documentation
+
+sw/src_reciever/.codex/
+sw/src_reciever/AGENTS.md
+sw/src_transmitter/.codex/
+sw/src_transmitter/AGENTS.md
+~$Lab09.docx

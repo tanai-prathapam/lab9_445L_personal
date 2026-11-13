@@ -16,5 +16,8 @@
     // write this
     // ***solution***
 
+void Joystick_Init();
+void Joystick_direction(uint32_t *x, uint32_t *y);
+
 
 
