@@ -58,6 +58,9 @@ int main(void){ // main to run Lab9 transmitter
 
 // Executed every 1 ms
 uint32_t x, y;
+uint32_t central_pos_x = 3024;
+uint32_t central_pos_y = 3024;
+uint32_t max_pos = 4096;
 void TIMG0_IRQHandler(void){
   if((TIMG0->CPU_INT.IIDX) == 1){ // this will acknowledge
 // the SDC interface will use this
