@@ -26,6 +26,8 @@
 #ifndef __FREQFIFO_H__
 #define __FREQFIFO_H__
 
+#include <stdint.h>
+
 // Two-index implementation of the frequency FIFO
 // can hold 0 to FREQFIFOSIZE elements
 #define FREQFIFOSIZE 16 // must be a power of 2
@@ -45,6 +47,7 @@ int FreqFifo_Get(freqDataType *datapt);
 // 0 to TXFIFOSIZE-1
 uint32_t FreqFifo_Size(void);
 
-
+// Publish an entire frame at once
+int FreqFifo_PutBatch(const freqDataType *data, uint32_t count);
 
 #endif //  __FREQFIFO_H__
