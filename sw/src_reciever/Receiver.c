@@ -13,7 +13,6 @@
 
 //   PA2-PA7, SSI0, ST7735R
 
-#include <stdint.h>
 #include "Lab9Rcv.h"
 #include <ti/devices/msp/msp.h>
 #include "../inc/DFT.h"
@@ -31,13 +30,25 @@
 void Receiver_Init(uint32_t period,uint32_t prescale){
   ADC1_Init(6, ADCVREF_INT);
   TimerG8_IntArm(period, prescale, 0);
+  TimerG6_IntArm(8192, 80, 1);
+  TIMG6->COUNTERREGS.CTRCTL &= ~(0x01); // disable TIMG6 
+  NoiseReject_Init();
 }
 
 void TIMG8_IRQHandler(void){// runs at the sampling rate, priority 0
   if((TIMG8->CPU_INT.IIDX) == 1){ // this will acknowledge
-    // #if DEBUG_MODE_RC == 1
-    adc_output = ADC1_In();
-    // #endif
+    #if DEBUG_MODE_RC == 1
+    adc_output = NoiseReject(ADC1_In());
+    #else
+    // DecodeFifo_Put(NoiseReject(ADC1_In()));
+    DecodeFifo_Put(ADC1_In());
+    #endif
+  }
+}
+
+void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
+  if((TIMG6->CPU_INT.IIDX) == 1){ // this will acknowledge
+    //TODO
   }
 }
 // start, 8 data, even parity

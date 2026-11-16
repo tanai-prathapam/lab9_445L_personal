@@ -46,6 +46,21 @@
 			<locationURI>PARENT-1-PROJECT_LOC/inc/Clock.c</locationURI>
 		</link>
 		<link>
+			<name>DFT.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/DFT.c</locationURI>
+		</link>
+		<link>
+			<name>DFT.h</name>
+			<type>1</type>
+			<location>C:/Users/eganw/ece445l_lab9_fall26-2-ew-js-tp-ak/sw/inc/DFT.h</location>
+		</link>
+		<link>
+			<name>FIFO.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/FIFO.c</locationURI>
+		</link>
+		<link>
 			<name>I2C.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/inc/I2C.c</locationURI>
@@ -59,6 +74,16 @@
 			<name>LaunchPad.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/inc/LaunchPad.c</locationURI>
+		</link>
+		<link>
+			<name>Median.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/inc/Median.c</locationURI>
+		</link>
+		<link>
+			<name>Median.h</name>
+			<type>1</type>
+			<location>C:/Users/eganw/ece445l_lab9_fall26-2-ew-js-tp-ak/sw/inc/Median.h</location>
 		</link>
 		<link>
 			<name>Motor.c</name>
@@ -81,16 +106,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/inc/SSD1306.c</locationURI>
 		</link>
 		<link>
-			<name>Median.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/Median.c</locationURI>
-		</link>
-		<link>
-			<name>DFT.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/DFT.c</locationURI>
-		</link>
-		<link>
 			<name>Tachometer.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/inc/Tachometer.c</locationURI>
@@ -104,11 +119,6 @@
 			<name>UART.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/inc/UART.c</locationURI>
-		</link>
-		<link>
-			<name>FIFO.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/inc/FIFO.c</locationURI>
 		</link>
 		<link>
 			<name>UARTints.c</name>

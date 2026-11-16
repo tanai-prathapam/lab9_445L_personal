@@ -42,7 +42,7 @@ int DecodeFifo_Put(decodeDataType data);
 // return TXFIFOSUCCESS if successful
 int DecodeFifo_Get(decodeDataType *datapt);
 // number of elements in index FIFO
-// 0 to TXFIFOSIZE-1
+// 0 to TXFIFOSIZE
 uint32_t DecodeFifo_Size(void);
 
 

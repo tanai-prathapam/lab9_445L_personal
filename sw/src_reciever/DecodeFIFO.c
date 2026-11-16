@@ -24,6 +24,35 @@
 #include <stdint.h>
 #include "DecodeFIFO.h"
 // ****ECE445L write this ****
+decodeDataType DecodeFifo[DECODEFIFOSIZE];
+uint8_t head, tail;
 
+void DecodeFifo_Init(void){
+   head = 0;
+   tail = 0;
+}
 
+int DecodeFifo_Put(decodeDataType data){
+   if(tail - head == DECODEFIFOSIZE){ //FIFO full
+      return DECODEFIFOFAIL;
+   }
+   DecodeFifo[(tail++) & (DECODEFIFOFAIL - 1)] = data;
+   return DECODEFIFOSUCCESS;
+}
+
+int DecodeFifo_Get(decodeDataType *datapt){
+   if(tail == head){ //FIFO empty
+      return DECODEFIFOFAIL;
+   }
+   *datapt = DecodeFifo[head++];
+   if(head == DECODEFIFOSIZE){ // wrap head and tail indexes
+      head -= DECODEFIFOSIZE;
+      tail -= DECODEFIFOSIZE;
+   }
+   return DECODEFIFOSUCCESS;
+}
+
+uint32_t DecodeFifo_Size(void){
+   return tail - head;
+}
 // end solution

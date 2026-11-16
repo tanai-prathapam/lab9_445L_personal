@@ -5,7 +5,9 @@
  *
  */
 
+#include <stdint.h>
 #include "Lab9Rcv.h"
+#include "DecodeFIFO.h"
 #include <ti/devices/msp/msp.h>
 #include "../inc/LaunchPad.h"
 #include "../inc/Clock.h"
@@ -18,21 +20,9 @@
 #include "../inc/MotorControl.h"
 #include "../inc/CLI.h"
 #include "Receiver.h"
+#include "../inc/DFT.h"
 
 #include "PIController.h"
-
-//movement commands
-#define CMD_STOP      0x00U
-#define CMD_FORWARD   0x01U
-#define CMD_BACKWARD  0x02U
-#define CMD_LEFT      0x04U
-#define CMD_RIGHT     0x08U
-// 0 = original CLI control, 1 = controller commands
-#define MOVEMENT_MODE 1
-
-//adjustable speed starting values
-#define ROBOT_SPEED   200U //200 = 20 rpm
-#define MOVE_TICKS    50U //50 updates means each movement lasts 0.5 secs
 
 // For debugger testing:
 // 1. Set Command to a value listed above.
@@ -60,10 +50,6 @@ uint32_t Duty,Period,Change;
 uint32_t Left,Center,Right;
 
 PIController L_PI, R_PI;
-
-
-
-
 
 // Receiver microphone
 //   PB19 analog input, ADC1 channel 6
@@ -106,6 +92,7 @@ PIController L_PI, R_PI;
 //   TIMG0 100 Hz periodic interrupt 
 //         to check for stopped motors
 //         to run motor controller
+//   TIMG6 to run at baud rate of FM receiver, period 8.192ms
 //   TIMG8 to sample ADC every 80us, 12.5kHz
 // Remove +5V jumper on RSLK2 from debugger to target
 // Remove J9: Disconnects thermistor from PB24
@@ -114,7 +101,7 @@ PIController L_PI, R_PI;
 // Insert J6: Connects PB26 to red LED2
 // Insert J7: Connects PB27 to green LED2
 
-uint32_t Bump;
+volatile uint32_t Bump;
 #if DEBUG_MODE_RC == 1
 uint16_t adc_output;
 int main(void){
@@ -140,6 +127,74 @@ int main(void){
     SSD1306_SetCursor(0, 3);
     SSD1306_OutString("max input: ");
     SSD1306_OutUDec(max);
+  }
+}
+#elif DEBUG_MODE_RC == 2
+int main(void){
+  __disable_irq();
+  LaunchPad_Init();
+  Clock_Init_HFXT_40_80MHz(0);  // 0.005% accurate running off external crystal oscillator
+  SSD1306_Init(SSD1306_SWITCHCAPVCC);
+  SSD1306_SetCursor(0,0);
+  SSD1306_ClearBuffer();
+  SSD1306_OutBuffer();
+  Receiver_Init(6400, 1);
+
+  
+  __enable_irq();
+  while(1){
+    if(DecodeFifo_Size() == DECODEFIFOSIZE){ // FIFO full, ready to decode
+      for(uint8_t i = 0; i < DECODEFIFOSIZE; i++){
+        DFT_Init();
+        decodeDataType sample;
+        if(!DecodeFifo_Get(&sample)){
+          SSD1306_SetCursor(0,3);
+          SSD1306_OutString("ERROR: FIFO pop");
+          while(1){} // hang
+        }
+        DFT(i, sample);
+      }
+      SSD1306_SetCursor(0, 2);
+      SSD1306_OutString("f1 mag: ");
+      SSD1306_OutUDec(Mag1());
+      SSD1306_SetCursor(0, 3);
+      SSD1306_OutString("f2 mag: ");
+      SSD1306_OutUDec(Mag2());
+    }
+  }
+}
+#elif DEBUG_MODE_RC == 3
+int main(void){
+  __disable_irq();
+  LaunchPad_Init();
+  Clock_Init_HFXT_40_80MHz(0);  // 0.005% accurate running off external crystal oscillator
+  SSD1306_Init(SSD1306_SWITCHCAPVCC);
+  SSD1306_SetCursor(0,0);
+  SSD1306_ClearBuffer();
+  SSD1306_OutBuffer();
+  Receiver_Init(6400, 1);
+  UART_Init();
+  
+  __enable_irq();
+  while(1){
+    if(DecodeFifo_Size() == DECODEFIFOSIZE){ // FIFO full, ready to decode
+      for(uint8_t i = 0; i < DECODEFIFOSIZE; i++){
+        DFT_Init();
+        decodeDataType sample;
+        if(!DecodeFifo_Get(&sample)){
+          SSD1306_SetCursor(0,3);
+          SSD1306_OutString("ERROR: FIFO pop");
+          while(1){} // hang
+        }
+        DFT(i, sample);
+      }
+      SSD1306_SetCursor(0, 2);
+      SSD1306_OutString("f1 mag: ");
+      SSD1306_OutUDec(Mag1());
+      SSD1306_SetCursor(0, 3);
+      SSD1306_OutString("f2 mag: ");
+      SSD1306_OutUDec(Mag2());
+    }
   }
 }
 #else
