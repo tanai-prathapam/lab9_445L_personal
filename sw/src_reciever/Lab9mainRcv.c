@@ -25,6 +25,13 @@
 
 #include "PIController.h"
 
+
+// Halt after initialization, set Command, then set CommandReady = 1.
+// Resume to execute. Wait for both wheel speeds to reach zero before
+// testing another movement. Values: STOP=0, FORWARD=1, BACKWARD=2,
+// LEFT=4, RIGHT=8. Movements run for MOVE_TICKS (currently 0.5 s).
+// Check each bumper stops movement and release does not restart it.
+
 // For debugger testing:
 // 1. Set Command to a value listed above.
 // 2. Set CommandReady to 1.
