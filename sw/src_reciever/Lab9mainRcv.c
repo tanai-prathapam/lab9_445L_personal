@@ -113,7 +113,7 @@ int main(void){
   SSD1306_SetCursor(0,0);
   SSD1306_ClearBuffer();
   SSD1306_OutBuffer();
-  Receiver_Init(6400, 1);
+  Receiver_Init(SAMPLE_PERIOD, 1);
 
   
   uint16_t max = 0;
@@ -140,7 +140,7 @@ int main(void){
   SSD1306_SetCursor(0,0);
   SSD1306_ClearBuffer();
   SSD1306_OutBuffer();
-  Receiver_Init(3200, 1);
+  Receiver_Init(SAMPLE_PERIOD, 1);
   int32_t f1m, f2m;
   
   __enable_irq();
@@ -148,10 +148,22 @@ int main(void){
     Receiver_DFT(&f1m, &f2m);
     SSD1306_SetCursor(0, 2);
     SSD1306_OutString("f1 mag: ");
-    SSD1306_OutSDec(f1m);
+    SSD1306_OutUDec(f1m);
     SSD1306_SetCursor(0, 3);
     SSD1306_OutString("f2 mag: ");
-    SSD1306_OutSDec(f2m);
+    SSD1306_OutUDec(f2m);
+    SSD1306_SetCursor(0, 4);
+    if(f1m > ONE_THRESHOLD){
+      SSD1306_OutString("f1: 1 ");
+    } else{
+      SSD1306_OutString("f1: 0 ");
+      if(f2m > ZERO_THRESHOLD){
+        SSD1306_OutString("f2: 1");
+      } else{
+        SSD1306_OutString("f2: 0");
+      }
+    }
+    
   }
 }
 #elif DEBUG_MODE_RC == 3
@@ -163,7 +175,7 @@ int main(void){
   SSD1306_SetCursor(0,0);
   SSD1306_ClearBuffer();
   SSD1306_OutBuffer();
-  Receiver_Init(6400, 1);
+  Receiver_Init(SAMPLE_PERIOD, 1);
   UART_Init();
   
   __enable_irq();
@@ -174,6 +186,36 @@ int main(void){
     }
     UART_OutSDec(sample);
     UART_OutString("\n");
+  }
+}
+#elif DEBUG_MODE_RC == 4
+int main(void){
+  __disable_irq();
+  LaunchPad_Init();
+  Clock_Init_HFXT_40_80MHz(0);  // 0.005% accurate running off external crystal oscillator
+  SSD1306_Init(SSD1306_SWITCHCAPVCC);
+  SSD1306_SetCursor(0,0);
+  SSD1306_ClearBuffer();
+  SSD1306_OutBuffer();
+  Receiver_Init(SAMPLE_PERIOD, 1);
+  int32_t one_m, zero_m;
+  
+  __enable_irq();
+  while(1){
+    if(Receiver_DecodeBit() != ZERO){
+      SSD1306_SetCursor(0, 2);
+    SSD1306_OutString("no frame          ");
+      continue;
+    }
+    SSD1306_SetCursor(0, 2);
+    SSD1306_OutString("start bit detected");
+    decodeDataType frame = 0;
+    Receiver_Decode();
+    while(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+      // WFI();
+    }
+    SSD1306_SetCursor(0, 3);
+    SSD1306_OutUHex32(frame);
   }
 }
 #else

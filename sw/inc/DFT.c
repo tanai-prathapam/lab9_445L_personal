@@ -40,7 +40,7 @@ int32_t NoiseReject(int32_t x){
   Rxx2 = ((K-1)*Rxx2 + t0*t2)/K;
   if(Rxx2 < -M) Rxx2 = -M; 
   if(Rxx2 >  M) Rxx2 =  M;
-  return (Rxx2*x)/M; 
+  return (Rxx2 * x)/M; 
 }
 
 const int32_t ReW[32] ={

@@ -33,10 +33,11 @@ void DecodeFifo_Init(void){
 }
 
 int DecodeFifo_Put(decodeDataType data){
-   if(tail - head == DECODEFIFOSIZE){ //FIFO full
+   if(((tail + 1) & (DECODEFIFOSIZE - 1)) == head){ //FIFO full
       return DECODEFIFOFAIL;
    }
-   DecodeFifo[(tail++) & (DECODEFIFOFAIL - 1)] = data;
+   DecodeFifo[tail] = data;
+   tail = (tail + 1) & (DECODEFIFOSIZE - 1);
    return DECODEFIFOSUCCESS;
 }
 
@@ -45,14 +46,11 @@ int DecodeFifo_Get(decodeDataType *datapt){
       return DECODEFIFOFAIL;
    }
    *datapt = DecodeFifo[head++];
-   if(head == DECODEFIFOSIZE){ // wrap head and tail indexes
-      head -= DECODEFIFOSIZE;
-      tail -= DECODEFIFOSIZE;
-   }
+   head &= (DECODEFIFOSIZE - 1);
    return DECODEFIFOSUCCESS;
 }
 
 uint32_t DecodeFifo_Size(void){
-   return tail - head;
+   return (tail + DECODEFIFOSIZE - head) & (DECODEFIFOSIZE - 1);
 }
 // end solution

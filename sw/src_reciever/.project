@@ -106,6 +106,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/inc/SSD1306.c</locationURI>
 		</link>
 		<link>
+			<name>SSD1306.h</name>
+			<type>1</type>
+			<location>C:/Users/eganw/ece445l_lab9_fall26-2-ew-js-tp-ak/sw/inc/SSD1306.h</location>
+		</link>
+		<link>
 			<name>Tachometer.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/inc/Tachometer.c</locationURI>

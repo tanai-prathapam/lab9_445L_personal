@@ -3,14 +3,21 @@
 // 1: Test ADC input
 // 2: Test frequency filtering behavior
 // 3: Stream time-domain signal to UART to test ADC/mic integrity
+// 4: Read single frames
 // 0: Run Lab 9
-#define DEBUG_MODE_RC 2
+#define DEBUG_MODE_RC 4
 
 #include <stdint.h>
 
 #if DEBUG_MODE_RC == 1
 extern uint16_t adc_output;
 #endif
+
+// COUNTERREGS.LOAD value for sampling
+#define SAMPLE_PERIOD 3200
+// COUNTERREGS.LOAD value for baud rate
+#define BAUD_PERIOD 8192
+
 //movement commands
 #define CMD_STOP      0x00U
 #define CMD_FORWARD   0x01U
