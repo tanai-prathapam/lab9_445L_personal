@@ -49,8 +49,8 @@ uint16_t frame;
 void Receiver_Init(uint32_t period,uint32_t prescale){
   ADC1_Init(6, ADCVREF_INT);
   TimerG8_IntArm(period, prescale, 0);
-  // TimerG6_IntArm(1, 256, 1);
   TimerG6_IntArm(1, 80, 1); // 100 baud rate
+  TIMG6->COUNTERREGS.LOAD = 0;
   NoiseReject_Init();
   circular_buffer_head = 0;
   DecodeFifo_Init();
@@ -127,12 +127,12 @@ rc_bit_t Receiver_DecodeBit(){
 
 // Starts decoding. Result will be pushed to stack if it's valid
 void Receiver_Decode(void){ // called from main loop
-  if(frame & 0x8000){ // decoding already in progress
-    return;
-  }
   decode_index = 0;
   frame = 0x8000;
   TIMG6->COUNTERREGS.LOAD = BAUD_PERIOD;
 }
 
-
+// returns nonzero value if frame is actively being decoded. 
+uint16_t Receiver_isDecoding(void){
+  return frame & 0x8000;
+}

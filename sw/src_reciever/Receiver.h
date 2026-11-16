@@ -50,4 +50,6 @@ rc_bit_t Receiver_DecodeBit();
 // upon detecting the input low. Validated 8-bit vector will be pushed to FIFO.
 void Receiver_Decode(void);
 
+uint16_t Receiver_isDecoding(void);
+
 #endif
