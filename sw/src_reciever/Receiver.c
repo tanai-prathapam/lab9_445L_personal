@@ -43,7 +43,7 @@ void TIMG8_IRQHandler(void){// runs at the sampling rate, priority 0
 // start, 8 data, even parity
 
 uint8_t Receiver_Decode(void){ // called from main loop
- 
+  
   return 0;
 }
 

@@ -21,15 +21,49 @@
 
 #include "PIController.h"
 
-// Watch these variables in the debugger.
-// Units are 0.1 RPM.
+//movement commands
+#define CMD_STOP      0x00U
+#define CMD_FORWARD   0x01U
+#define CMD_BACKWARD  0x02U
+#define CMD_LEFT      0x04U
+#define CMD_RIGHT     0x08U
+// 0 = original CLI control, 1 = controller commands
+#define MOVEMENT_MODE 1
+
+//adjustable speed starting values
+#define ROBOT_SPEED   200U //200 = 20 rpm
+#define MOVE_TICKS    50U //50 updates means each movement lasts 0.5 secs
+
+// For debugger testing:
+// 1. Set Command to a value listed above.
+// 2. Set CommandReady to 1.
+//
+// Later, the decoder can write a valid received byte here.
+// Zero is STOP, so CommandReady distinguishes STOP from no message.
+volatile uint32_t Command = CMD_STOP;
+volatile uint32_t CommandReady = 0;
+
+// Robot state
+volatile uint32_t ActiveCommand = CMD_STOP;
+volatile uint32_t MoveTicksLeft = 0;
+
+static void Robot_Stop(void);
+static void Robot_Start(uint32_t command);
+static void Robot_CommandTick(void);
+
+// Units are 0.1 RPM. will appear in debugger
 volatile uint32_t LeftSpeed;
 volatile uint32_t RightSpeed;
+volatile uint32_t Bump;
 
 uint32_t Duty,Period,Change;
 uint32_t Left,Center,Right;
 
 PIController L_PI, R_PI;
+
+
+
+
 
 // Receiver microphone
 //   PB19 analog input, ADC1 channel 6
@@ -131,10 +165,19 @@ int main(void){ // use to run Lab 9 receiver
     MC_PIController_changeparams(&L_PI, 9863, 772, starter_RPM_to_send);
     MC_PIController_changeparams(&R_PI, 9863, 772, starter_RPM_to_send);
   #endif
-  __enable_irq();
+
+  // initialize the CLI before enabling interrupts in CLI mode.
+  #if MOVEMENT_MODE == 0
   CLI_Init(&L_PI, &R_PI);
+  #endif
+
+  __enable_irq();
+
   while(1){
+  #if MOVEMENT_MODE == 0
     CLI_Process();
+  #endif
+
     uint32_t rightRPM = Tachometer_GetRightrpm();
     uint32_t leftRPM = Tachometer_GetLeftrpm();
     SSD1306_SetCursor(0,3);
@@ -144,6 +187,19 @@ int main(void){ // use to run Lab 9 receiver
     SSD1306_SetCursor(0,4);
     SSD1306_OutString("LeftRPM="); 
     SSD1306_OutUDec(leftRPM/10); SSD1306_OutChar('.'); SSD1306_OutUDec(leftRPM%10);
+
+    #if MOVEMENT_MODE == 1
+      SSD1306_SetCursor(0,0);
+      SSD1306_OutString("Cmd=");
+      SSD1306_OutUDec(ActiveCommand);
+      SSD1306_OutString("   ");
+
+      SSD1306_SetCursor(0,1);
+      SSD1306_OutString("Bump=");
+      SSD1306_OutUDec(Bump);
+      SSD1306_OutString("   ");
+    #endif
+
   }
 }
 #endif
@@ -151,7 +207,114 @@ int main(void){ // use to run Lab 9 receiver
 void TIMG0_IRQHandler(void){
   if((TIMG0->CPU_INT.IIDX) == 1){ // this will acknowledge
   // ****ECE445L write this ****
+  Tachometer_CheckForStopped();
+  LeftSpeed = Tachometer_GetLeftrpm();
+  RightSpeed = Tachometer_GetRightrpm();
+  Bump = Bump_In();
 
+  #if MOVEMENT_MODE == 0
+    // Run the existing controller for CLI operation.
+    MC_PIControlLoop(&L_PI, &R_PI);
+  #else
+    Robot_CommandTick();
+  #endif
 
   }
 }
+
+
+static void Robot_Stop(void){
+  Motor_Forward(0, 0);
+
+  L_PI.speed_ref = 0;
+  R_PI.speed_ref = 0;
+
+  L_PI.prev_error = 0;
+  R_PI.prev_error = 0;
+
+  L_PI.prev_out = 0;
+  R_PI.prev_out = 0;
+
+  ActiveCommand = CMD_STOP;
+  MoveTicksLeft = 0;
+}
+
+static void Robot_Start(uint32_t command){
+  // clear previous corrections when starting a new movement.
+  L_PI.prev_error = 0;
+  R_PI.prev_error = 0;
+
+  L_PI.prev_out = 0;
+  R_PI.prev_out = 0;
+
+  L_PI.speed_ref = ROBOT_SPEED;
+  R_PI.speed_ref = ROBOT_SPEED;
+
+  // casic curve turns stop the inside wheel.
+  if(command == CMD_LEFT){
+    L_PI.speed_ref = 0;
+  }
+
+  if(command == CMD_RIGHT){
+    R_PI.speed_ref = 0;
+  }
+
+  ActiveCommand = command;
+  MoveTicksLeft = MOVE_TICKS;
+}
+
+static void Robot_CommandTick(void){
+  // stop and cancel the current command on any bumper press.
+  // releasing the bumper does not restart the old command.
+  if(Bump){
+    CommandReady = 0;
+    Robot_Stop();
+    return;
+  }
+
+  if(CommandReady){
+    uint32_t command = Command;
+    CommandReady = 0;
+
+    if(command == CMD_STOP){
+      Robot_Stop();
+
+    }else if(ActiveCommand == CMD_STOP &&
+             LeftSpeed == 0 &&
+             RightSpeed == 0){
+
+      // start movement only when the robot is stopped.
+      if(command == CMD_FORWARD ||
+         command == CMD_BACKWARD ||
+         command == CMD_LEFT ||
+         command == CMD_RIGHT){
+        Robot_Start(command);
+      }
+    }
+  }
+
+  if(ActiveCommand != CMD_STOP){
+    if(MoveTicksLeft == 0){
+      Robot_Stop();
+
+    }else{
+      uint32_t leftDuty =
+          PIController_update(&L_PI, LeftSpeed);
+
+      uint32_t rightDuty =
+          PIController_update(&R_PI, RightSpeed);
+
+      if(ActiveCommand == CMD_BACKWARD){
+        Motor_Backward(leftDuty, rightDuty);
+      }else{
+        Motor_Forward(leftDuty, rightDuty);
+      }
+
+      MoveTicksLeft--;
+    }
+  }
+}
+
+
+  
+
