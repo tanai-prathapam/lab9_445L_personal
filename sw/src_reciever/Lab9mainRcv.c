@@ -188,7 +188,7 @@ int main(void){
     UART_OutString("\n");
   }
 }
-#elif DEBUG_MODE_RC == 4
+#elif DEBUG_MODE_RC == 4 || DEBUG_MODE_RC == 5
 int main(void){
   __disable_irq();
   LaunchPad_Init();
@@ -210,8 +210,8 @@ int main(void){
     SSD1306_SetCursor(0, 2);
     SSD1306_OutString("start bit detected");
     decodeDataType frame = 0;
-    Receiver_Decode();
     while(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+      Receiver_Decode();
       // WFI();
     }
     SSD1306_SetCursor(0, 3);
