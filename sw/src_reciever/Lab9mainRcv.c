@@ -5,6 +5,7 @@
  *
  */
 
+#include "Lab9Rcv.h"
 #include <ti/devices/msp/msp.h>
 #include "../inc/LaunchPad.h"
 #include "../inc/Clock.h"
@@ -80,6 +81,34 @@ PIController L_PI, R_PI;
 // Insert J7: Connects PB27 to green LED2
 
 uint32_t Bump;
+#if DEBUG_MODE_RC == 1
+uint16_t adc_output;
+int main(void){
+  __disable_irq();
+  LaunchPad_Init();
+  Clock_Init_HFXT_40_80MHz(0);  // 0.005% accurate running off external crystal oscillator
+  SSD1306_Init(SSD1306_SWITCHCAPVCC);
+  SSD1306_SetCursor(0,0);
+  SSD1306_ClearBuffer();
+  SSD1306_OutBuffer();
+  Receiver_Init(6400, 1);
+
+  
+  uint16_t max = 0;
+  __enable_irq();
+  while(1){
+    SSD1306_SetCursor(0, 2);
+    SSD1306_OutString("ADC input: ");
+    SSD1306_OutUDec(adc_output);
+    if(adc_output > max){
+      max = adc_output;
+    }
+    SSD1306_SetCursor(0, 3);
+    SSD1306_OutString("max input: ");
+    SSD1306_OutUDec(max);
+  }
+}
+#else
 int main(void){ // use to run Lab 9 receiver
 // ****ECE445L write this ****
 
@@ -117,6 +146,7 @@ int main(void){ // use to run Lab 9 receiver
     SSD1306_OutUDec(leftRPM/10); SSD1306_OutChar('.'); SSD1306_OutUDec(leftRPM%10);
   }
 }
+#endif
 // runs in real time at 100 Hz
 void TIMG0_IRQHandler(void){
   if((TIMG0->CPU_INT.IIDX) == 1){ // this will acknowledge
