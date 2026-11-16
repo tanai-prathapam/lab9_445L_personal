@@ -21,7 +21,7 @@ extern uint16_t adc_output;
 // COUNTERREGS.LOAD value for sampling
 #define SAMPLE_PERIOD 3200
 // COUNTERREGS.LOAD value for baud rate
-#define BAUD_PERIOD 8192
+#define BAUD_PERIOD 10000 // 10ms
 
 //movement commands
 #define CMD_STOP      0x00U

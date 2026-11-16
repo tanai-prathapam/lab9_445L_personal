@@ -50,7 +50,8 @@ uint16_t frame;
 void Receiver_Init(uint32_t period,uint32_t prescale){
   ADC1_Init(6, ADCVREF_INT);
   TimerG8_IntArm(period, prescale, 0);
-  TimerG6_IntArm(1, 800, 1);
+  // TimerG6_IntArm(1, 256, 1);
+  TimerG6_IntArm(1, 80, 1); // 100 baud rate
   NoiseReject_Init();
   circular_buffer_head = 0;
   DecodeFifo_Init();
