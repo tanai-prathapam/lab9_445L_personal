@@ -21,6 +21,7 @@
 #include "../inc/CLI.h"
 #include "Receiver.h"
 #include "../inc/DFT.h"
+#include "../inc/UART.h"
 
 #include "PIController.h"
 
@@ -118,6 +119,7 @@ int main(void){
   uint16_t max = 0;
   __enable_irq();
   while(1){
+    adc_output = NoiseReject(ADC1_In());
     SSD1306_SetCursor(0, 2);
     SSD1306_OutString("ADC input: ");
     SSD1306_OutUDec(adc_output);
@@ -138,29 +140,18 @@ int main(void){
   SSD1306_SetCursor(0,0);
   SSD1306_ClearBuffer();
   SSD1306_OutBuffer();
-  Receiver_Init(6400, 1);
-
+  Receiver_Init(3200, 1);
+  int32_t f1m, f2m;
   
   __enable_irq();
   while(1){
-    if(DecodeFifo_Size() == DECODEFIFOSIZE){ // FIFO full, ready to decode
-      for(uint8_t i = 0; i < DECODEFIFOSIZE; i++){
-        DFT_Init();
-        decodeDataType sample;
-        if(!DecodeFifo_Get(&sample)){
-          SSD1306_SetCursor(0,3);
-          SSD1306_OutString("ERROR: FIFO pop");
-          while(1){} // hang
-        }
-        DFT(i, sample);
-      }
-      SSD1306_SetCursor(0, 2);
-      SSD1306_OutString("f1 mag: ");
-      SSD1306_OutUDec(Mag1());
-      SSD1306_SetCursor(0, 3);
-      SSD1306_OutString("f2 mag: ");
-      SSD1306_OutUDec(Mag2());
-    }
+    Receiver_DFT(&f1m, &f2m);
+    SSD1306_SetCursor(0, 2);
+    SSD1306_OutString("f1 mag: ");
+    SSD1306_OutSDec(f1m);
+    SSD1306_SetCursor(0, 3);
+    SSD1306_OutString("f2 mag: ");
+    SSD1306_OutSDec(f2m);
   }
 }
 #elif DEBUG_MODE_RC == 3
@@ -177,24 +168,12 @@ int main(void){
   
   __enable_irq();
   while(1){
-    if(DecodeFifo_Size() == DECODEFIFOSIZE){ // FIFO full, ready to decode
-      for(uint8_t i = 0; i < DECODEFIFOSIZE; i++){
-        DFT_Init();
-        decodeDataType sample;
-        if(!DecodeFifo_Get(&sample)){
-          SSD1306_SetCursor(0,3);
-          SSD1306_OutString("ERROR: FIFO pop");
-          while(1){} // hang
-        }
-        DFT(i, sample);
-      }
-      SSD1306_SetCursor(0, 2);
-      SSD1306_OutString("f1 mag: ");
-      SSD1306_OutUDec(Mag1());
-      SSD1306_SetCursor(0, 3);
-      SSD1306_OutString("f2 mag: ");
-      SSD1306_OutUDec(Mag2());
+    decodeDataType sample;
+    if(!DecodeFifo_Get(&sample)){
+      continue;
     }
+    UART_OutSDec(sample);
+    UART_OutString("\n");
   }
 }
 #else

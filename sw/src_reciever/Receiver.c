@@ -22,7 +22,8 @@
 #include "DecodeFIFO.h"
 // ****ECE445L write this ****
 
-
+uint16_t circular_buffer[16];
+uint8_t head; // points to oldest sample
 
 // -----------     Receiver_Init    -----------------------------
 // Sample ADC1 channel 6
@@ -33,16 +34,14 @@ void Receiver_Init(uint32_t period,uint32_t prescale){
   TimerG6_IntArm(8192, 80, 1);
   TIMG6->COUNTERREGS.CTRCTL &= ~(0x01); // disable TIMG6 
   NoiseReject_Init();
+  head = 0;
+  DecodeFifo_Init();
 }
 
 void TIMG8_IRQHandler(void){// runs at the sampling rate, priority 0
   if((TIMG8->CPU_INT.IIDX) == 1){ // this will acknowledge
-    #if DEBUG_MODE_RC == 1
-    adc_output = NoiseReject(ADC1_In());
-    #else
-    // DecodeFifo_Put(NoiseReject(ADC1_In()));
-    DecodeFifo_Put(ADC1_In());
-    #endif
+    circular_buffer[head] = NoiseReject(ADC1_In());
+    head = (head + 1) & 0x0F;
   }
 }
 
@@ -51,8 +50,20 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
     //TODO
   }
 }
-// start, 8 data, even parity
 
+void Receiver_DFT(int32_t *Mag_1, int32_t *Mag_2){
+  DFT_Init();
+  for(uint8_t i = 0; i < 16; i++){
+    // No critical section. Interrupts are guaranteed to overwrite
+    // the oldest sample in the circular buffer, and the buffer is
+    // read oldest first, so subsequent reads are unaffected by 
+    // writes. 
+    DFT(i, circular_buffer[(head + i) & 0x0F]);
+  }
+  *Mag_1 = Mag1();
+  *Mag_2 = Mag2();
+}
+// start, 8 data, even parity
 uint8_t Receiver_Decode(void){ // called from main loop
   
   return 0;

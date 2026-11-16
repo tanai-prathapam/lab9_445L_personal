@@ -31,7 +31,7 @@
 #define DECODEFIFOSIZE 16 // must be a power of 2
 #define DECODEFIFOSUCCESS 1
 #define DECODEFIFOFAIL    0
-typedef int8_t decodeDataType;
+typedef uint8_t decodeDataType;
 
 // initialize index FIFO
 void DecodeFifo_Init(void);

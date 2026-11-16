@@ -19,6 +19,13 @@
 // Sample time is 25ns*period*prescale
 // Timer G8 is power Domain PD0
 void Receiver_Init(uint32_t period,uint32_t prescale);
+
+// Runs a 16-sample DTFS on the 16 most recent samples in the circular buffer. 
+// Mag1 and Mag2 store the first and second frequency amplitudes, respectively.
+void Receiver_DFT(int32_t *Mag_1, int32_t *Mag_2);
+
+// Call this function to decode an incoming FM signal. Expected to be called 
+// upon detecting the input low. 
 uint8_t Receiver_Decode(void);
 
 #endif

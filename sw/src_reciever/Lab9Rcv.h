@@ -2,7 +2,7 @@
 #define LAB9RCV 1
 // 1: Test ADC input
 // 2: Test frequency filtering behavior
-// 3: Plot time-domain signal to test ADC/mic integrity
+// 3: Stream time-domain signal to UART to test ADC/mic integrity
 // 0: Run Lab 9
 #define DEBUG_MODE_RC 2
 
