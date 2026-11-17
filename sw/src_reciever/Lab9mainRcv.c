@@ -216,13 +216,13 @@ int main(void){
     }
     SSD1306_SetCursor(0, 2);
     SSD1306_OutString("start bit detected");
-    decodeDataType frame = 0;
-    while(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+    decodeDataType frame_main = 0;
+    while(DecodeFifo_Get(&frame_main) != DECODEFIFOSUCCESS){
       Receiver_Decode();
       // WFI();
     }
     SSD1306_SetCursor(0, 3);
-    SSD1306_OutUHex32(frame);
+    SSD1306_OutUHex32(frame_main);
   }
 }
 #elif DEBUG_MODE_RC == 5
@@ -250,12 +250,12 @@ int main(void){
       SSD1306_OutString("no frame          ");
     }
     // display frames received if received
-    decodeDataType frame = 0;
-    if(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+    decodeDataType frame_main = 0;
+    if(DecodeFifo_Get(&frame_main) != DECODEFIFOSUCCESS){
       continue;
     }
     SSD1306_SetCursor(0, 3);
-    SSD1306_OutUHex32(frame);
+    SSD1306_OutUHex32(frame_main);
   }
 }
 #else
@@ -312,25 +312,25 @@ int main(void){ // use to run Lab 9 receiver
           SSD1306_SetCursor(0,2);
           SSD1306_OutString("Receiving...");
 
-          decodeDataType frame = 0;
+          decodeDataType transmitted_command = 0;
           Receiver_Decode();
 
           // interrupts remain enabled while waiting
-          while(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+          while(DecodeFifo_Get(&transmitted_command) != DECODEFIFOSUCCESS){
           }
 
           // put the recieved byte on the display
           SSD1306_SetCursor(0,2);
           SSD1306_OutString("Rx=");
-          SSD1306_OutUHex32(frame);
+          SSD1306_OutUHex32(transmitted_command);
           SSD1306_OutString("   ");
 
           // robot commands
-          if(frame == CMD_STOP ||
-             frame == CMD_FORWARD ||
-             frame == CMD_BACKWARD ||
-             frame == CMD_LEFT ||
-             frame == CMD_RIGHT){
+          if(transmitted_command == CMD_STOP ||
+             transmitted_command == CMD_FORWARD ||
+             transmitted_command == CMD_BACKWARD ||
+             transmitted_command == CMD_LEFT ||
+             transmitted_command == CMD_RIGHT) {
 
             // push the command and ready flag at the same time
             uint32_t saved = __get_PRIMASK();
@@ -343,7 +343,7 @@ int main(void){ // use to run Lab 9 receiver
                CommandReady == 0 &&
                Bump == 0){
 
-              Command = frame;
+              Command = transmitted_command;
               CommandReady = 1;
             }
 

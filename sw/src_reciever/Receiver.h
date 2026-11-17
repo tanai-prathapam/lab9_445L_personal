@@ -34,6 +34,10 @@ typedef enum RC_Bit{
   ERROR
 } rc_bit_t;
 
+
+//helper
+uint8_t parse_frame (decodeDataType frame_main);
+
 // Sample time is 25ns*period*prescale
 // Timer G8 is power Domain PD0
 void Receiver_Init(uint32_t period,uint32_t prescale);

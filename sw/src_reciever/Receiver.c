@@ -44,6 +44,20 @@ uint8_t decode_index; // current bit being written to
 //   Bit 0 is an end bit, should always be high. 
 uint16_t frame;
 
+//Helpers
+decodeDataType parse_frame (decodeDataType frame_main) {
+  decodeDataType command_bits = frame_main >> 2;
+  decodeDataType transmitted_command = 0x0;
+  uint8_t mask = 0b100000; 
+  int max_i = 6; 
+  for (int i = 0; i < max_i; i++) {
+    uint8_t temp = (command_bits & mask) >> (max_i - (i + 1));
+    transmitted_command |= temp;
+    mask = mask >> 1;
+  }
+  return transmitted_command;
+}
+
 // -----------     Receiver_Init    -----------------------------
 // Sample ADC1 channel 6
 // Timer G8: enabled for real time sampling, priority 0
@@ -76,7 +90,9 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
       break;
       case ONE:
         frame |= 1<<(FRAME_SIZE - (decode_index + 1));
-        frame ^= 0x2000; // toggle parity check bit
+          if(decode_index < FRAME_SIZE - 1) {
+            frame ^= 0x2000;
+          }
       break;
       // Don't need to do anything for zero since frame is
       // initialized as all zeros
@@ -93,7 +109,8 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
     }
     #endif
     // Push validated bit vector
-    DecodeFifo_Put((frame>>2) & 0x0FF);
+    decodeDataType transmitted_command = parse_frame((decodeDataType) (frame & 0xFF));
+    DecodeFifo_Put(transmitted_command);
     frame = 0; // clear all bits, including bit 0
   }
 }
@@ -138,3 +155,19 @@ void Receiver_Decode(void){ // called from main loop
 uint16_t Receiver_isDecoding(void){
   return frame & 0x8000;
 }
+
+// 8 up
+// 4 down
+// 2 left 
+// 1 right
+
+// lsb -> msb 
+// 1000 00 00
+// 010000 00
+// 001000 00
+// 000100 00
+
+// 10 0000 
+// 01 0000 
+// 00 1000 
+// 00 0100 
