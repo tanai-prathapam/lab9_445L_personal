@@ -21,6 +21,7 @@
 #include "../inc/ADC.h"
 #include "DecodeFIFO.h"
 #include "Receiver.h"
+#include <stdio.h>
 // ****ECE445L write this ****
 
 // Circular buffer parameters
@@ -31,16 +32,16 @@ uint8_t circular_buffer_head; // points to oldest sample
 uint8_t decode_index; // current bit being written to
 
 // 16-bit vector encoding information about the frame being received.
-// Bit 0: set to 1 when vector is being decoded. 
-// Bit 1: set to 1 if validation of received message fails. 
-//   Accompanied by bit 0 being set high.
-// Bit 2: toggled on every 1 received in the frame. Should always be
+// Bit 15: set to 1 when vector is being decoded. 
+// Bit 14: set to 1 if validation of received message fails. 
+//   Accompanied by bit 15 being set high.
+// Bit 13: toggled on every 1 received in the frame. Should always be
 //   0 once decoding is complete due to even parity. 
-// Bits 6-15: the literal frame read, sans start bit. 
-//   Bits 6-13 form the 8-bit validated vector pushed onto the FIFO. 
-//   Bit 14 is the parity bit. Functionality is superceded by bit 2
+// Bits 9-0: the literal frame read, sans start bit. 
+//   Bits 9-2 form the 8-bit validated vector pushed onto the FIFO. 
+//   Bit 1 is the parity bit. Functionality is superceded by bit 2
 //     outside of decoding scope. 
-//   Bit 15 is an end bit, should always be high. 
+//   Bit 0 is an end bit, should always be high. 
 uint16_t frame;
 
 // -----------     Receiver_Init    -----------------------------
@@ -87,6 +88,7 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
     // Begin frame interpretation
     #if DEBUG_MODE_RC != 4 // don't validate in debug mode 4
     if(frame & 0x6000 || !(frame & 0x01)){ // dropped bit, failed parity, or invalid stop bit
+      frame = 0;
       return;
     }
     #endif
