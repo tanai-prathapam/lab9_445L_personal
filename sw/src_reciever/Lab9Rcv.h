@@ -10,8 +10,6 @@
 
 #include <stdint.h>
 
-#define DEBUG_MODE_RC 0
-
 // 0 = original CLI control, 1 = controller commands
 #define MOVEMENT_MODE 1
 

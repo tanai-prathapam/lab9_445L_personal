@@ -86,7 +86,7 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
     }
     TIMG6->COUNTERREGS.LOAD = 0; // why isn't this disabling the timer?
     // Begin frame interpretation
-    #if DEBUG_MODE_RC != 4 // don't validate in debug mode 4
+    #if DEBUG_MODE_RC != 4 && DEBUG_MODE_RC != 5 // don't validate in debug mode 4
     if(frame & 0x6000 || !(frame & 0x01)){ // dropped bit, failed parity, or invalid stop bit
       frame = 0;
       return;
