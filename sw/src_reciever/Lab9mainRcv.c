@@ -310,7 +310,7 @@ int main(void){ // use to run Lab 9 receiver
         if(Receiver_DecodeBit() == ZERO){
 
           SSD1306_SetCursor(0,2);
-          SSD1306_OutString("Receiving...        ");
+          SSD1306_OutString("Receiving...");
 
           decodeDataType frame = 0;
           Receiver_Decode();
