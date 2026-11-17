@@ -42,7 +42,7 @@ uint8_t decode_index; // current bit being written to
 //   Bit 1 is the parity bit. Functionality is superceded by bit 2
 //     outside of decoding scope. 
 //   Bit 0 is an end bit, should always be high. 
-uint16_t frame;
+volatile uint16_t frame; //shared between main and decoding interrupt and volatile makes it so the main loop reads the updated value
 
 //Helpers
 decodeDataType parse_frame (decodeDataType frame_main) {

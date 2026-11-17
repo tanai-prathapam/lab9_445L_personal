@@ -315,8 +315,17 @@ int main(void){ // use to run Lab 9 receiver
           decodeDataType transmitted_command = 0;
           Receiver_Decode();
 
-          // interrupts remain enabled while waiting
-          while(DecodeFifo_Get(&transmitted_command) != DECODEFIFOSUCCESS){
+          // Interrupts remain enabled so the receiver can finish.
+          while(Receiver_isDecoding()){
+          }
+
+
+          //changed from while (DecodeFifo_Get(&transmitted_command) != DECODEFIFOSUCCESS) to the below if statement so it won't infinite loop
+          //returns to listening instead of waiting forever
+          if (DecodeFifo_Get(&transmitted_command) != DECODEFIFOSUCCESS){
+            SSD1306_SetCursor(0,2);
+            SSD1306_OutString("No valid frame      ");
+            continue;
           }
 
           // put the recieved byte on the display

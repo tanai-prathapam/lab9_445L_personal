@@ -6,7 +6,7 @@
 // 4: Read single frames
 // 5: Read single frames with validation
 // 0: Run Lab 9
-#define DEBUG_MODE_RC 5
+#define DEBUG_MODE_RC 0
 
 #include <stdint.h>
 
