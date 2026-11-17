@@ -254,12 +254,74 @@ int main(void){ // use to run Lab 9 receiver
   CLI_Init(&L_PI, &R_PI);
   #endif
 
+  #if MOVEMENT_MODE == 1
+    Receiver_Init(SAMPLE_PERIOD, 1);
+  #endif
+
   __enable_irq();
 
   while(1){
   #if MOVEMENT_MODE == 0
     CLI_Process();
   #endif
+
+  #if MOVEMENT_MODE == 1
+
+      // start receiving only when the robot is stopped and ready.
+      if(ActiveCommand == CMD_STOP &&
+         LeftSpeed == 0 &&
+         RightSpeed == 0 &&
+         CommandReady == 0 &&
+         Bump == 0){
+
+        if(Receiver_DecodeBit() == ZERO){
+
+          SSD1306_SetCursor(0,2);
+          SSD1306_OutString("Receiving...        ");
+
+          decodeDataType frame = 0;
+          Receiver_Decode();
+
+          // interrupts remain enabled while waiting
+          while(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+          }
+
+          // put the recieved byte on the display
+          SSD1306_SetCursor(0,2);
+          SSD1306_OutString("Rx=");
+          SSD1306_OutUHex32(frame);
+          SSD1306_OutString("   ");
+
+          // robot commands
+          if(frame == CMD_STOP ||
+             frame == CMD_FORWARD ||
+             frame == CMD_BACKWARD ||
+             frame == CMD_LEFT ||
+             frame == CMD_RIGHT){
+
+            // push the command and ready flag at the same time
+            uint32_t saved = __get_PRIMASK();
+            __disable_irq();
+
+            // recheck in case interrupts ran during the process of receiving a command
+            if(ActiveCommand == CMD_STOP &&
+               LeftSpeed == 0 &&
+               RightSpeed == 0 &&
+               CommandReady == 0 &&
+               Bump == 0){
+
+              Command = frame;
+              CommandReady = 1;
+            }
+
+            __set_PRIMASK(saved);
+          }
+        }
+      }
+
+    #endif
+
+
 
     uint32_t rightRPM = Tachometer_GetRightrpm();
     uint32_t leftRPM = Tachometer_GetLeftrpm();
@@ -381,11 +443,12 @@ static void Robot_CommandTick(void){
       Robot_Stop();
 
     }else{
-      uint32_t leftDuty =
-          PIController_update(&L_PI, LeftSpeed);
+      uint32_t leftDuty = PIController_update(&L_PI, LeftSpeed);
+      uint32_t rightDuty = PIController_update(&R_PI, RightSpeed);
 
-      uint32_t rightDuty =
-          PIController_update(&R_PI, RightSpeed);
+      // TEMPORARY TEST: fixed 50% duty for forward testing.
+      //uint32_t leftDuty = MOTOR_PERIOD / 2;
+      //uint32_t rightDuty = MOTOR_PERIOD / 2;
 
       if(ActiveCommand == CMD_BACKWARD){
         Motor_Backward(leftDuty, rightDuty);
