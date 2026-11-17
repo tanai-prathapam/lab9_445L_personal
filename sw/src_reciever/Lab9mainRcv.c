@@ -309,11 +309,11 @@ int main(void){ // use to run Lab 9 receiver
 
         if(Receiver_DecodeBit() == ZERO){
 
-          SSD1306_SetCursor(0,2);
-          SSD1306_OutString("Receiving...");
-
           decodeDataType transmitted_command = 0;
           Receiver_Decode();
+
+          SSD1306_SetCursor(0,2);
+          SSD1306_OutString("Receiving...      ");
 
           // Interrupts remain enabled so the receiver can finish.
           while(Receiver_isDecoding()){
@@ -466,10 +466,7 @@ static void Robot_CommandTick(void){
     if(command == CMD_STOP){
       Robot_Stop();
 
-    }else if(ActiveCommand == CMD_STOP &&
-             LeftSpeed == 0 &&
-             RightSpeed == 0){
-
+    }else if(ActiveCommand == CMD_STOP && LeftSpeed == 0 && RightSpeed == 0){
       // start movement only when the robot is stopped.
       if(command == CMD_FORWARD ||
          command == CMD_BACKWARD ||
@@ -498,7 +495,7 @@ static void Robot_CommandTick(void){
         Motor_Forward(leftDuty, rightDuty);
       }
 
-      MoveTicksLeft--;
+      // MoveTicksLeft--;
     }
   }
 }

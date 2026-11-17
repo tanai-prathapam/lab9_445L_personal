@@ -25,8 +25,8 @@
 // ****ECE445L write this ****
 
 // Circular buffer parameters
-uint16_t circular_buffer[16];
-uint8_t circular_buffer_head; // points to oldest sample
+static volatile uint16_t circular_buffer[16];
+static volatile uint8_t circular_buffer_head; // points to oldest sample
 
 // Decoding parameters
 uint8_t decode_index; // current bit being written to
@@ -58,17 +58,38 @@ decodeDataType parse_frame (decodeDataType frame_main) {
   return transmitted_command;
 }
 
+static void Receiver_StopBitTimer(void){
+  TIMG6->CPU_INT.IMASK = 0;
+  TIMG6->COUNTERREGS.CTRCTL &= ~1;
+
+  // Clear the timer zero event and its pending NVIC interrupt.
+  TIMG6->CPU_INT.ICLR = 1;
+  NVIC->ICPR[0] = (1 << 17);
+}
+
 // -----------     Receiver_Init    -----------------------------
 // Sample ADC1 channel 6
 // Timer G8: enabled for real time sampling, priority 0
 void Receiver_Init(uint32_t period,uint32_t prescale){
-  ADC1_Init(6, ADCVREF_INT);
-  TimerG8_IntArm(period, prescale, 0);
-  TimerG6_IntArm(1, 80, 1); // 100 baud rate
-  TIMG6->COUNTERREGS.LOAD = 0;
-  NoiseReject_Init();
+  // Call with global interrupts disabled, as your main already does.
+  frame = 0;
+  decode_index = FRAME_SIZE;
   circular_buffer_head = 0;
+
+  for(uint32_t i = 0; i < 16U; i++){
+    circular_buffer[i] = 0;
+  }
+
   DecodeFifo_Init();
+  NoiseReject_Init();
+  ADC1_Init(6, ADCVREF_INT);
+
+  // 80 MHz / 80 / 10000 = 100 Hz.
+  TimerG6_IntArm(10000, 80, 1);
+  Receiver_StopBitTimer();
+
+  // With period=3200, prescale=1: 12.5 kHz sampling.
+  TimerG8_IntArm(period, prescale, 0);
 }
 
 void TIMG8_IRQHandler(void){ // runs at the sampling rate, priority 0
@@ -80,19 +101,36 @@ void TIMG8_IRQHandler(void){ // runs at the sampling rate, priority 0
 
 void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
   if((TIMG6->CPU_INT.IIDX) == 1){ // this will acknowledge
+    if(((frame & 0x8000) == 0) ||
+      (decode_index >= FRAME_SIZE)){
+      Receiver_StopBitTimer();
+      return;
+    }
     if(decode_index == FRAME_SIZE){
       return;
     }
     switch(Receiver_DecodeBit()){
       case ERROR:
         frame |= 0x4000; // do not finish decoding to reject entire
-                       // corrupted frame
+        // corrupted frame
       break;
       case ONE:
-        frame |= 1<<(FRAME_SIZE - (decode_index + 1));
-          if(decode_index < FRAME_SIZE - 1) {
-            frame ^= 0x2000;
-          }
+        // frame |= 1<<(FRAME_SIZE - (decode_index + 1));
+        // if(decode_index < FRAME_SIZE - 1) {
+        //   frame ^= 0x2000;
+        // }
+        if(decode_index < 8) {
+          // first data and payload
+          frame |= (uint16_t)(1 << (decode_index + 2));
+          frame ^= 0x2000;
+        } else if (decode_index == 8) {
+          // parity received 
+          frame |= 0x0002;
+          frame ^= 0x2000;
+        } else {
+          // stop bit excluded from pariy
+          frame |= 0x0001;
+        }
       break;
       // Don't need to do anything for zero since frame is
       // initialized as all zeros
@@ -100,22 +138,36 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
     if((++decode_index) != FRAME_SIZE){ // decoding still WIP
       return;
     }
-    TIMG6->COUNTERREGS.LOAD = 0; // why isn't this disabling the timer?
+    // TIMG6->COUNTERREGS.LOAD = 0; // why isn't this disabling the timer?
+    Receiver_StopBitTimer();
     // Begin frame interpretation
     #if DEBUG_MODE_RC != 4 && DEBUG_MODE_RC != 5 // don't validate in debug mode 4
-    if(frame & 0x6000 || !(frame & 0x01)){ // dropped bit, failed parity, or invalid stop bit
+    if(((frame & 0x6000) != 0) || ((frame & 0x01) == 0)){ // dropped bit, failed parity, or invalid stop bit
       frame = 0;
       return;
     }
     #endif
     // Push validated bit vector
-    decodeDataType transmitted_command = parse_frame((decodeDataType) (frame & 0xFF));
+    //decodeDataType transmitted_command = parse_frame((decodeDataType) (frame & 0xFF));
+    decodeDataType transmitted_command = (decodeDataType)((frame >> 2) & 0xFF);
     DecodeFifo_Put(transmitted_command);
     frame = 0; // clear all bits, including bit 0
   }
 }
 
 void Receiver_DFT(int32_t *Mag_1, int32_t *Mag_2){
+  uint16_t samples[16];
+
+  uint32_t saved = __get_PRIMASK();
+  __disable_irq();
+
+  uint8_t head = circular_buffer_head;
+
+  for(uint32_t i = 0; i < 16; i++){
+    samples[i] = circular_buffer[(head + i) & 0x0F];
+  }
+
+  __set_PRIMASK(saved);
   static int32_t prevM1, prevM2;
   DFT_Init();
   for(uint8_t i = 0; i < 16; i++){
@@ -123,7 +175,8 @@ void Receiver_DFT(int32_t *Mag_1, int32_t *Mag_2){
     // the oldest sample in the circular buffer, and the buffer is
     // read oldest first, so subsequent reads are unaffected by 
     // writes. 
-    DFT(i, circular_buffer[(circular_buffer_head + i) & 0x0F]);
+    //DFT(i, circular_buffer[(circular_buffer_head + i) & 0x0F]);
+    DFT(i, samples[i]);
   }
   // Low-pass IIR filter
   // prevM1 = 3 * (prevM1 >> 2) + (Mag1() >> 2);
@@ -146,9 +199,32 @@ rc_bit_t Receiver_DecodeBit(){
 
 // Starts decoding. Result will be pushed to stack if it's valid
 void Receiver_Decode(void){ // called from main loop
+  // decode_index = 0;
+  // frame = 0x8000;
+  // TIMG6->COUNTERREGS.LOAD = BAUD_PERIOD;
+  uint32_t saved = __get_PRIMASK();
+  __disable_irq();
+
+  if((frame & 0x8000) != 0){
+    __set_PRIMASK(saved);
+    return;
+  }
+
+  Receiver_StopBitTimer();
+
   decode_index = 0;
   frame = 0x8000;
-  TIMG6->COUNTERREGS.LOAD = BAUD_PERIOD;
+
+  // Subsequent decisions occur every 10 ms.
+  TIMG6->COUNTERREGS.LOAD = BAUD_PERIOD - 1;
+
+  TIMG6->CPU_INT.ICLR = 1;
+  NVIC->ICPR[0] = (1 << 17);
+
+  TIMG6->CPU_INT.IMASK = 1;
+  TIMG6->COUNTERREGS.CTRCTL |= 1;
+
+  __set_PRIMASK(saved);
 }
 
 // returns nonzero value if frame is actively being decoded. 
