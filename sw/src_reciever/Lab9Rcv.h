@@ -4,6 +4,7 @@
 // 2: Test frequency filtering behavior
 // 3: Stream time-domain signal to UART to test ADC/mic integrity
 // 4: Read single frames
+// 5: Read single frames with validation
 // 0: Run Lab 9
 
 

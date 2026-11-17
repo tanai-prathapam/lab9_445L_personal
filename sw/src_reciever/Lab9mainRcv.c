@@ -211,15 +211,48 @@ int main(void){
   while(1){
     if(Receiver_DecodeBit() != ZERO){
       SSD1306_SetCursor(0, 2);
-    SSD1306_OutString("no frame          ");
+      SSD1306_OutString("no frame          ");
       continue;
     }
     SSD1306_SetCursor(0, 2);
     SSD1306_OutString("start bit detected");
     decodeDataType frame = 0;
-    Receiver_Decode();
     while(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+      Receiver_Decode();
       // WFI();
+    }
+    SSD1306_SetCursor(0, 3);
+    SSD1306_OutUHex32(frame);
+  }
+}
+#elif DEBUG_MODE_RC == 5
+int main(void){
+  __disable_irq();
+  LaunchPad_Init();
+  Clock_Init_HFXT_40_80MHz(0);  // 0.005% accurate running off external crystal oscillator
+  SSD1306_Init(SSD1306_SWITCHCAPVCC);
+  SSD1306_SetCursor(0,0);
+  SSD1306_ClearBuffer();
+  SSD1306_OutBuffer();
+  Receiver_Init(SAMPLE_PERIOD, 1);
+  
+  __enable_irq();
+  while(1){
+    if(Receiver_isDecoding()){ // don't disrupt active decoding
+      continue;
+    }
+    SSD1306_SetCursor(0, 2);
+    // available to begin new decoding job
+    if(Receiver_DecodeBit() == ZERO){ // start bit detected
+      SSD1306_OutString("start bit detected");
+      Receiver_Decode();
+    }else{
+      SSD1306_OutString("no frame          ");
+    }
+    // display frames received if received
+    decodeDataType frame = 0;
+    if(DecodeFifo_Get(&frame) != DECODEFIFOSUCCESS){
+      continue;
     }
     SSD1306_SetCursor(0, 3);
     SSD1306_OutUHex32(frame);

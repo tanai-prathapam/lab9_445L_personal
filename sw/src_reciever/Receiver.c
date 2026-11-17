@@ -31,8 +31,7 @@ uint8_t circular_buffer_head; // points to oldest sample
 uint8_t decode_index; // current bit being written to
 
 // 16-bit vector encoding information about the frame being received.
-// Bit 0: set to 1 when vector is finished being received and ready
-//   to be decoded. 
+// Bit 0: set to 1 when vector is being decoded. 
 // Bit 1: set to 1 if validation of received message fails. 
 //   Accompanied by bit 0 being set high.
 // Bit 2: toggled on every 1 received in the frame. Should always be
@@ -50,8 +49,8 @@ uint16_t frame;
 void Receiver_Init(uint32_t period,uint32_t prescale){
   ADC1_Init(6, ADCVREF_INT);
   TimerG8_IntArm(period, prescale, 0);
-  // TimerG6_IntArm(1, 256, 1);
   TimerG6_IntArm(1, 80, 1); // 100 baud rate
+  TIMG6->COUNTERREGS.LOAD = 0;
   NoiseReject_Init();
   circular_buffer_head = 0;
   DecodeFifo_Init();
@@ -84,7 +83,6 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
     if((++decode_index) != FRAME_SIZE){ // decoding still WIP
       return;
     }
-    frame |= 0x8000;
     TIMG6->COUNTERREGS.LOAD = 0; // why isn't this disabling the timer?
     // Begin frame interpretation
     #if DEBUG_MODE_RC != 4 // don't validate in debug mode 4
@@ -94,6 +92,7 @@ void TIMG6_IRQHandler(void){// runs at baud rate, priority 1
     #endif
     // Push validated bit vector
     DecodeFifo_Put((frame>>2) & 0x0FF);
+    frame = 0; // clear all bits, including bit 0
   }
 }
 
@@ -129,8 +128,11 @@ rc_bit_t Receiver_DecodeBit(){
 // Starts decoding. Result will be pushed to stack if it's valid
 void Receiver_Decode(void){ // called from main loop
   decode_index = 0;
-  frame = 0;
+  frame = 0x8000;
   TIMG6->COUNTERREGS.LOAD = BAUD_PERIOD;
 }
 
-
+// returns nonzero value if frame is actively being decoded. 
+uint16_t Receiver_isDecoding(void){
+  return frame & 0x8000;
+}
