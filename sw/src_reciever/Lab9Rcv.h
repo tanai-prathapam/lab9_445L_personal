@@ -10,7 +10,12 @@
 
 #include <stdint.h>
 
-#if DEBUG_MODE_RC == 1
+#define DEBUG_MODE_RC 0
+
+// 0 = original CLI control, 1 = controller commands
+#define MOVEMENT_MODE 1
+
+#if DEBUG_MODE_RC == 0
 extern uint16_t adc_output;
 #endif
 
@@ -25,8 +30,6 @@ extern uint16_t adc_output;
 #define CMD_BACKWARD  0x02U
 #define CMD_LEFT      0x04U
 #define CMD_RIGHT     0x08U
-// 0 = original CLI control, 1 = controller commands
-#define MOVEMENT_MODE 1
 
 //adjustable speed starting values
 #define ROBOT_SPEED   200U //200 = 20 rpm
