@@ -30,7 +30,7 @@ extern uint16_t adc_output;
 #define CMD_RIGHT     0x08U
 
 //adjustable speed starting values
-#define ROBOT_SPEED   200U //200 = 20 rpm
+#define ROBOT_SPEED   1500U //200 = 20 rpm
 #define MOVE_TICKS    50U //50 updates means each movement lasts 0.5 secs
 
 #endif
